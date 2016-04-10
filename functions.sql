@@ -22,17 +22,23 @@ CREATE PROCEDURE checkout(patron DECIMAL(9,0), book DECIMAL(9,0), num DECIMAL(2,
 
 BEGIN
   DECLARE numout DECIMAL(2,0) ;
+  DECLARE due DATE ;
 
-  IF (SELECT * FROM Users WHERE uid=patron) IS NULL THEN
+  IF (SELECT flagged FROM Users WHERE uid=patron) IS NULL THEN
     SIGNAL SQLSTATE '40000' SET MESSAGE_TEXT='No such patron' ;
   END IF ;
-  SET numout=(SELECT num_out FROM CheckedOut WHERE book=ISBN AND patron=uid) ;
+  IF (SELECT flagged FROM Users WHERE uid=patron)=TRUE THEN
+    SIGNAL SQLSTATE '40001' SET MESSAGE_TEXT='User flagged' ;
+  END IF ;
   IF available(book)<num THEN
-    SIGNAL SQLSTATE '40001' SET MESSAGE_TEXT='Not enough assets available' ;
-  ELSEIF numout IS NULL THEN
-    INSERT INTO CheckedOut (uid, ISBN, num_out) VALUES (patron, book, num);
+    SIGNAL SQLSTATE '40002' SET MESSAGE_TEXT='Not enough assets available' ;
+  END IF ;
+  SET due=CURRENT_DATE() + INTERVAL 2 WEEK ;
+  SET numout=(SELECT num_out FROM CheckedOut WHERE book=ISBN AND patron=uid AND due_date=due) ;
+  IF numout IS NULL THEN
+    INSERT INTO CheckedOut (uid, ISBN, num_out, due_date) VALUES (patron, book, num, due);
   ELSE
-    UPDATE CheckedOut SET num_out=num_out+num WHERE book=ISBN AND patron=uid ;
+    UPDATE CheckedOut SET num_out=num_out+num WHERE book=ISBN AND patron=uid AND due_date=due ;
   END IF ;
 END |
 
@@ -42,15 +48,22 @@ CREATE PROCEDURE checkin(patron DECIMAL(9,0), book DECIMAL(13,0), num DECIMAL(2,
 
 BEGIN
   DECLARE numout DECIMAL(2,0) ;
+  DECLARE due DATE ;
 
-  SET numout=(SELECT num_out FROM CheckedOut WHERE book=ISBN AND patron=uid) ;
+  SET numout=(SELECT SUM(num_out) FROM CheckedOut WHERE book=ISBN AND patron=uid) ;
   IF numout IS NULL OR numout<num THEN
-    SIGNAL SQLSTATE '40002' SET MESSAGE_TEXT='Patron does not have that many checked-out' ;
-  ELSEIF numout=num THEN
-    DELETE FROM CheckedOut WHERE book=ISBN AND patron=uid ;
-  ELSE
-    UPDATE CheckedOut SET num_out=num_out-num WHERE book=ISBN AND PATRON=uid;
+    SIGNAL SQLSTATE '40003' SET MESSAGE_TEXT='Patron does not have that many checked-out' ;
   END IF ;
+  WHILE num>0 DO
+    SET due=(SELECT due_date FROM CheckedOut WHERE book=ISBN AND patron=uid ORDER BY due_date LIMIT 1) ;
+    IF (SELECT num_out FROM CheckedOut WHERE book=ISBN AND patron=uid AND due_date=due)>num THEN 
+      UPDATE CheckedOut SET num_out=num_out-num WHERE book=ISBN AND patron=uid AND due=due_date ;
+      SET num=0 ;
+    ELSE
+      SET num=num-(SELECT num_out FROM CheckedOut WHERE book=ISBN AND patron=uid AND due=due_date) ;
+      DELETE FROM CheckedOut WHERE book=ISBN AND patron=uid ;
+    END IF ;
+  END WHILE ;
 END |
 
 DELIMITER ;
