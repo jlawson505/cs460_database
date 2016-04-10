@@ -1,4 +1,4 @@
-import BusinessObjects.User;
+import BusinessObjects.Patron;
 
 /**
  * Created by James Lawson on 4/8/2016.
@@ -10,15 +10,15 @@ public class Main
 
   public static void main(String[] args)
   {
-    new GUIFrame(new GUIPanel());
-    User user = new User("zfalgout", "Upe4OPvb");
-    if(!user.connectToDB())
+   // new GUIFrame(new GUIPanel());
+    Patron patron = new Patron("zfalgout", "Upe4OPvb");
+    if(!patron.connectToDB())
     	{
     		System.err.println("Failed to connect to database");
     		System.exit(1);
     	}
-    
-    user.closeConnection();
+    if(!patron.checkout(0, 001)) System.err.println("checkout failed");;
+    patron.closeConnection();
     
   }
 }

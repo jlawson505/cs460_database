@@ -3,6 +3,7 @@ package BusinessObjects;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 
 /**
  * 
@@ -15,13 +16,21 @@ import java.sql.SQLException;
  * to make sure that user is allowed to make changes to the database
  */
 
-public class User extends DBOperations
+public class Patron extends DBOperations
 {
 	private Connection connect = null;
+	private PreparedStatement preparedStatement = null;
+	
 	//check if user is connected before read and writes to database
 	private boolean isConnected = false;
 	private String username, password;
-	public User(String username, String password)
+	
+	/**
+	 * Sets up the user object
+	 * @param username the login name for the database
+	 * @param password the password for the database
+	 */
+	public Patron(String username, String password)
 	{
 		this.username = username;
 		this.password = password;
@@ -41,8 +50,10 @@ public class User extends DBOperations
 			connect = DriverManager
 			          .getConnection("jdbc:mysql://Tarandophobia.is-a-geek.org/bookworm"
 			              + "?user="+username + "&password=" + password);
+			isConnected = true;
 		} catch (SQLException e) 
 		{
+			isConnected = false;
 			return false;
 		}
 		return true;
@@ -50,15 +61,18 @@ public class User extends DBOperations
 
 
 	@Override
-	public boolean checkout(int uid, int ISBN) {
+	public boolean checkout(int uid,int ISBN) {
 		if(!isConnected) return false;
-		return false;
-	}
-
-	@Override
-	public boolean checkin(int uid, int ISBN) {
-		if(!isConnected) return false;
-		return false;
+		try 
+		{
+			preparedStatement = connect.prepareStatement("insert into CheckedOut values(" + uid + ", " + ISBN + ", '2016-05-10', 1)");
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -71,6 +85,7 @@ public class User extends DBOperations
 		try 
 		{
 			connect.close();
+			preparedStatement.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
