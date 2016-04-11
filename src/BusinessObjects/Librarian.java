@@ -36,6 +36,21 @@ public class Librarian extends DBOperations {
 		}
 		return true;
 	}// end showUsers
+	
+	public boolean addUser(String lastName, String firstName, String role ){
+		if(!isConnected) return false;
+		
+		try {
+			preparedStatement = connect.prepareStatement("INSERT INTO Users(last_name, first_name, role) VALUES (lastName, firstName, role)");
+			preparedStatement.executeUpdate();
+			isConnected = true;
+			
+		} catch (SQLException e){
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
 
 	@Override
 	public boolean connectToDB() {
