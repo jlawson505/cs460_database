@@ -21,6 +21,21 @@ public class Librarian extends DBOperations {
 		this.password = password;
 	}
 	
+	
+	public boolean showUsers(){
+		if(!isConnected) return false;
+		
+		try 
+		{
+			preparedStatement = connect.prepareStatement("SELECT * FROM users");
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}// end showUsers
 
 	@Override
 	public boolean connectToDB() {
