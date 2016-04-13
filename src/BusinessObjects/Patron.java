@@ -2,8 +2,8 @@ package BusinessObjects;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * 
@@ -74,6 +74,23 @@ public class Patron extends DBOperations
 		}
 		return true;
 	}
+	
+	@Override
+	public boolean checkin(int uid, int ISBN)
+	{
+		if(!isConnected) return false;
+		
+		try 
+		{
+			preparedStatement = connect.prepareStatement("delete from CheckedOut where uid=" + uid + " and ISBN=" + ISBN);
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
 
 	/**
 	 * Handles closing the connections to the database, and all related
@@ -84,8 +101,8 @@ public class Patron extends DBOperations
 	{
 		try 
 		{
-			connect.close();
-			preparedStatement.close();
+			if(connect != null) connect.close();
+			if(preparedStatement != null) preparedStatement.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();

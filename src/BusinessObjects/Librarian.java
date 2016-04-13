@@ -3,7 +3,9 @@ package BusinessObjects;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 
 public class Librarian extends DBOperations {
@@ -21,27 +23,29 @@ public class Librarian extends DBOperations {
 		this.password = password;
 	}
 	
-	
-	public boolean showUsers(){
-		if(!isConnected) return false;
-		
+	public ResultSet showUsers(){
+		if(!isConnected) return null;
+		ResultSet resultSet = null;
 		try 
 		{
-			preparedStatement = connect.prepareStatement("SELECT * FROM users");
-			preparedStatement.executeUpdate();
+			preparedStatement = connect.prepareStatement("SELECT * FROM Users");
+			resultSet = preparedStatement.executeQuery();
+			
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
-			return false;
+			return null;
 		}
-		return true;
+		return resultSet;
 	}// end showUsers
 	
-	public boolean addUser(String lastName, String firstName, String role ){
+	@Override
+	public boolean addUser(int uid, String lastName, String firstName, String role ){
 		if(!isConnected) return false;
 		
 		try {
-			preparedStatement = connect.prepareStatement("INSERT INTO Users(last_name, first_name, role) VALUES (lastName, firstName, role)");
+			preparedStatement = connect.prepareStatement("INSERT INTO Users VALUES ("
+					+ uid + ", '" + lastName + "', '" + firstName  + "', false, '" + role + "')");
 			preparedStatement.executeUpdate();
 			isConnected = true;
 			
@@ -72,8 +76,8 @@ public class Librarian extends DBOperations {
 	public void closeConnection() {
 		try 
 		{
-			connect.close();
-			preparedStatement.close();
+			if(connect != null) connect.close();
+			if(preparedStatement != null) preparedStatement.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();

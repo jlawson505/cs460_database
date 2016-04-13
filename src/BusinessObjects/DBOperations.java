@@ -12,9 +12,7 @@ import java.sql.ResultSet;
  *	database
  */
 public abstract class DBOperations 
-{
-	public enum Roles {supervisor, librarian, patron}
-	
+{	
 	/**
 	 * Handles connecting to the database
 	 * @return should return true if connection succeeds, otherwise false
@@ -47,14 +45,13 @@ public abstract class DBOperations
 	/**
 	 * Adds a user to the Users tables with the given information: uid, lastName, firstName, role
 	 * Needs to check that the accessID has the authorization to add users to the Users table
-	 * @param accessID the id of a person whose access level is higher than a patrons
 	 * @param uid user id of the user being added
 	 * @param lastName last name of the user
 	 * @param firstName first name of the user
 	 * @param role access level of the user
 	 * @return true if succeeds, false otherwise
 	 */
-	public boolean addUser(int accessID, int uid, String lastName, String firstName, Roles role) 
+	public boolean addUser(int uid, String lastName, String firstName, String role) 
 	{
 		return false;
 	}
@@ -88,7 +85,7 @@ public abstract class DBOperations
 	 * @param role level of access into the database
 	 * @return ResultSet containing information of look up, or NULL if failed
 	 */
-	public ResultSet lookupUser(Roles role) 
+	public ResultSet lookupUser(String role) 
 	{
 		return null;
 	}
@@ -97,4 +94,5 @@ public abstract class DBOperations
 	 * Handles closing all connections to the database
 	 */
 	public abstract void closeConnection();
+
 }
